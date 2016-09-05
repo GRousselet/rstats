@@ -64,3 +64,15 @@ y<-y[!is.na(y)]
 }
 out <- as.vector(outer(x,y,FUN="-"))
 }
+
+skewness<-function(x){
+m3<-sum((x-mean(x))^3)/length(x)
+s3<-sqrt(var(x))^3
+m3/s3
+}
+
+kurtosis<-function(x){
+m4<-sum((x-mean(x))^4)/length(x)
+s4<-var(x)^2
+m4/s4 - 3
+}
