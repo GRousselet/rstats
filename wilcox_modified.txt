@@ -68,7 +68,7 @@ shiftdhd<-function(x,y,nboot=200){
 #   use the function qcomdhd or  qdec2ci
 #
 # Modified from Rallfun-v31: GAR - University of Glasgow - 2016-06-22
-# simplified inputs/outputs for use with new shift_function_figure()
+# simplified inputs/outputs for use with new plot.sf()
 # changed labels to reflect nature of data: 'conditions' here, 'groups' for shifthd
 # now returns a tibble for use with ggplot2
 xy=elimna(cbind(x,y))
@@ -91,6 +91,96 @@ m[d,5]<-m[d,3]+crit*se
 }
 out<-as_tibble(data.frame(m))
 names(out)<-c('condition1','condition2','difference','ci_lower','ci_upper')
+out
+}
+
+qcomhd<-function(x,y,q=c(.1,.25,.5,.75,.9),nboot=2000,alpha=.05){
+#
+# Compare quantiles using pb2gen
+# via hd estimator. Tied values are allowed.
+# When comparing lower or upper quartiles, both power and the probability of Type I error
+# compare well to other methods that have been derived.
+# q: can be used to specify the quantiles to be compared
+# q defaults to comparing the .1,.25,.5,.75, and .9 quantiles
+#   Function returns p-values and critical p-values based on Hochberg's method.
+#
+# Modified from Rallfun-v31: GAR - University of Glasgow - 2016-09-30
+# simplified inputs to make independent figures using `plot.pbsf`
+# changed labels to reflect nature of data: 'groups' here, 'conditions' for `Dqcomhd`
+# now returns a tibble for use with ggplot2
+m <- matrix(NA,nrow=length(q),ncol=9)
+for(qi in 1:length(q)){
+m[qi,1]=q[qi]
+m[qi,2]=hd(x,q=q[qi])
+m[qi,3]=hd(y,q=q[qi])
+m[qi,4]=m[qi,2]-m[qi,3]
+temp=pb2gen(x,y,nboot=nboot,est=hd,q=q[qi],SEED=FALSE,alpha=alpha,pr=FALSE)
+m[qi,5]=temp$ci[1]
+m[qi,6]=temp$ci[2]
+m[qi,8]=temp$p.value
+}
+temp=order(m[,8],decreasing=TRUE)
+zvec=alpha/c(1:length(q))
+m[temp,7]=zvec
+for(qi in 1:nrow(m)){
+if(m[temp[qi],8]>m[temp[qi],7]) m[temp[qi],9]=0
+if(m[temp[qi],8]<=m[temp[qi],7]) m[temp[qi],9]=1
+}
+out<-as_tibble(data.frame(m))
+names(out)<-c('q','group1','group2','difference','ci_lower','ci_upper','p_crit','p-value','sig')
+out
+}
+
+Dqcomhd<-function(x,y,q=c(.1,.25,.5,.75,.9),nboot=1000,alpha=.05,na.rm=TRUE){
+#
+# Compare the quantiles of the marginal distributions associated with  two dependent groups
+# via hd estimator. Tied values are allowed.
+# When comparing lower or upper quartiles, both power and the probability of Type I error
+# compare well to other methods have been derived.
+#
+#  x: data for group 1
+#  y: data for group 2
+#  q: the quantiles to be compared
+#  nboot: Number of bootstrap samples
+#
+# Modified from Rallfun-v31: GAR - University of Glasgow - 2016-09-30
+# simplified inputs to make independent figures using `plot.pbsf`
+# changed labels to reflect nature of data: 'conditions' here, 'groups' for `qcomhd`
+# now returns a tibble for use with ggplot2
+# automatically removes missing values
+if(na.rm){
+xy=elimna(cbind(x,y))
+x=xy[,1]
+y=xy[,2]
+}
+m=matrix(NA,nrow=length(q),ncol=9)
+for(qi in 1:length(q)){
+m[qi,1]=q[qi]
+m[qi,2]=hd(x,q=q[qi])
+m[qi,3]=hd(y,q=q[qi])
+m[qi,4]=m[qi,2]-m[qi,3]
+if(na.rm){
+temp=bootdpci(x,y,est=hd,q=q[qi],dif=FALSE,plotit=FALSE,pr=FALSE,nboot=nboot,alpha=alpha,SEED=FALSE)
+output[qi,5]=temp$output[1,5]
+output[qi,6]=temp$output[1,6]
+output[qi,8]=temp$output[1,3]
+}
+if(!na.rm){
+temp=rmmismcp(x,y,est=hd,q=q[qi],plotit=FALSE,pr=FALSE,nboot=nboot,alpha=alpha,SEED=FALSE)
+m[qi,5]=temp$output[1,6]
+m[qi,6]=temp$output[1,7]
+m[qi,8]=temp$output[1,4]
+}
+}
+temp=order(m[,8],decreasing=TRUE)
+zvec=alpha/c(1:length(q))
+m[temp,7]=zvec
+for(qi in 1:nrow(m)){
+if(m[temp[qi],8]>m[temp[qi],7]) m[temp[qi],9]=0
+if(m[temp[qi],8]<=m[temp[qi],7]) m[temp[qi],9]=1
+}
+out<-as_tibble(data.frame(m))
+names(out)<-c('q','condition1','condition2','difference','ci_lower','ci_upper','p_crit','p-value','sig')
 out
 }
 
