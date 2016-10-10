@@ -133,7 +133,7 @@ out
 
 Dqcomhd<-function(x,y,q=c(.1,.25,.5,.75,.9),nboot=1000,alpha=.05,na.rm=TRUE){
 #
-# Compare the quantiles of the marginal distributions associated with  two dependent groups
+# Compare the quantiles of the marginal distributions associated with two dependent groups
 # via hd estimator. Tied values are allowed.
 # When comparing lower or upper quartiles, both power and the probability of Type I error
 # compare well to other methods have been derived.
@@ -161,9 +161,9 @@ m[qi,3]=hd(y,q=q[qi])
 m[qi,4]=m[qi,2]-m[qi,3]
 if(na.rm){
 temp=bootdpci(x,y,est=hd,q=q[qi],dif=FALSE,plotit=FALSE,pr=FALSE,nboot=nboot,alpha=alpha,SEED=FALSE)
-output[qi,5]=temp$output[1,5]
-output[qi,6]=temp$output[1,6]
-output[qi,8]=temp$output[1,3]
+m[qi,5]=temp$output[1,5]
+m[qi,6]=temp$output[1,6]
+m[qi,8]=temp$output[1,3]
 }
 if(!na.rm){
 temp=rmmismcp(x,y,est=hd,q=q[qi],plotit=FALSE,pr=FALSE,nboot=nboot,alpha=alpha,SEED=FALSE)
